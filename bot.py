@@ -65,7 +65,7 @@ def create_wallet() -> dict:
 # Command handler for creating a wallet
 def create_wallet_command(update: Update, context: CallbackContext) -> None:
     user_id = update.message.from_user.id
-    username = update.message.from_user.username
+    username = update.message.from_username
     existing_user = session.query(User).filter_by(telegram_id=user_id).first()
 
     if existing_user:
