@@ -55,7 +55,8 @@ session = Session()
 
 # Helper functions
 def create_wallet():
-    response = requests.post('http://localhost:8441/wallet/create')
+    headers = {'X-API-KEY': XTE_API_RPC_PASSWORD}
+    response = requests.post('http://localhost:8441/wallet/create', headers=headers)
     if response.status_code == 200:
         return response.json()
     else:
