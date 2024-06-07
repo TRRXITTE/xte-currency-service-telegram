@@ -55,7 +55,7 @@ session = Session()
 
 # Helper functions
 def create_wallet():
-    response = requests.post('http://localhost/wallet/create')
+    response = requests.post('http://localhost:8441/wallet/create')
     if response.status_code == 200:
         return response.json()
     else:
