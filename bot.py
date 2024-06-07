@@ -191,11 +191,9 @@ def history_command(update: Update, context: CallbackContext) -> None:
         message += "Amount: {} XTE, Recipient: {}, Status: {}\n".format(tx.amount, tx.recipient_address, tx.status)
     update.message.reply_text(message)
 
-# Create a queue to store incoming updates
-update_queue = Request()
 
 def main() -> None:
-    updater = Updater(TELEGRAM_BOT_TOKEN, update_queue=update_queue)
+    updater = Updater(TELEGRAM_BOT_TOKEN)
     dispatcher = updater.dispatcher
 
     dispatcher.add_handler(CommandHandler("start", start))
