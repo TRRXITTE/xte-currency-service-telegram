@@ -49,7 +49,7 @@ class Wallet(Base):
     address = Column(String, nullable=False)
     encrypted_private_spend_key = Column(String, nullable=False)
     public_spend_key = Column(String, nullable=False)
-    user = relationship("User", back_populates="wallet", foreign_keys=[user_id])
+    user = relationship("User", back_populates="wallet", foreign_keys=[user_id], remote_side="User.id")
 
 
 # Create engine and session
