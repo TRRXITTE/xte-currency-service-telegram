@@ -64,26 +64,17 @@ def create_wallet_command(update: Update, context: CallbackContext) -> None:
         return
 
     try:
-        # Create wallet
-        wallet = create_wallet()
-        wallet_address = wallet['address']
-        encrypted_spend_key = fernet.encrypt(wallet['spendKey'].encode()).decode()
+        # Generate a new, random address
+        address_data = generate_random_address()
 
-        new_user = User(telegram_id=user_id, wallet_address=wallet_address, encrypted_spend_key=encrypted_spend_key)
+        new_user = User(telegram_id=user_id, wallet_address=address_data['address'], encrypted_spend_key=fernet.encrypt(address_data['privateSpendKey'].encode()).decode())
         session.add(new_user)
         session.commit()
 
-        # Create new address
-        address_data = create_address(wallet_address)
-        new_address = Address(user_id=new_user.id, address=address_data['address'], private_spend_key=address_data['privateSpendKey'], public_spend_key=address_data['publicSpendKey'])
-        session.add(new_address)
-        session.commit()
-
-        update.message.reply_text('Your new wallet has been created. Address: {}'.format(wallet_address))
-        update.message.reply_text('New address created: {}'.format(address_data['address']))
+        update.message.reply_text('Your new wallet has been created. Address: {}'.format(address_data['address']))
     except Exception as e:
-        logger.error("Error creating wallet or address: {}".format(e))
-        update.message.reply_text('Error creating your wallet or address. Please try again.')
+        logger.error("Error creating wallet: {}".format(e))
+        update.message.reply_text('Error creating your wallet. Please try again.')
 
 
 def export_keys_command(update: Update, context: CallbackContext) -> None:
