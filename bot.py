@@ -38,7 +38,8 @@ class User(Base):
     telegram_id = Column(Integer, unique=True, nullable=False)
     username = Column(String, unique=True, nullable=False)
     wallet_id = Column(Integer, ForeignKey('wallets.id'))
-    wallet = relationship("Wallet", back_populates="user")
+    wallet = relationship("Wallet", back_populates="user", foreign_keys=[wallet_id])
+
 
 
 class Wallet(Base):
