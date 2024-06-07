@@ -4,24 +4,15 @@ from sqlalchemy import create_engine, Column, Integer, String, Float, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from cryptography.fernet import Fernet
-from telegram import Update, ForceReply
-from telegram.ext import Updater, CommandHandler, CallbackContext
 from dotenv import load_dotenv
 import os
-import json  # Add json module
-
-# Load init.py file
-from init import create_wallet_init_file
 
 # Load environment variables
 load_dotenv()
 
 # Constants
-TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
-XTE_API_BASE_URL = os.getenv('XTE_API_BASE_URL')
 DATABASE_URL = os.getenv('DATABASE_URL')
 ENCRYPTION_KEY = os.getenv('ENCRYPTION_KEY')
-XTE_API_RPC_PASSWORD = os.getenv('XTE_API_RPC_PASSWORD')
 
 # Set up encryption
 fernet = Fernet(ENCRYPTION_KEY.encode())
@@ -37,62 +28,61 @@ class User(Base):
     __tablename__ = 'users'
     id = Column(Integer, primary_key=True)
     telegram_id = Column(Integer, unique=True, nullable=False)
-    wallet_address = Column(String, nullable=False)
-    encrypted_spend_key = Column(String, nullable=False)
+    username = Column(String, unique=True, nullable=False)
+    wallet = relationship("Wallet", uselist=False, back_populates="user")
 
-class Transaction(Base):
-    __tablename__ = 'transactions'
+class Wallet(Base):
+    __tablename__ = 'wallets'
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
-    amount = Column(Float, nullable=False)
-    recipient_address = Column(String, nullable=False)
-    status = Column(String, default='pending')
-    user = relationship("User")
+    address = Column(String, nullable=False)
+    encrypted_private_spend_key = Column(String, nullable=False)
+    public_spend_key = Column(String, nullable=False)
+    user = relationship("User", back_populates="wallet")
 
+# Create engine and session
 engine = create_engine(DATABASE_URL)
 Base.metadata.create_all(engine)
 Session = sessionmaker(bind=engine)
 session = Session()
 
-# Helper functions
-def create_wallet() -> dict:
+# Helper function to create wallet
+def create_wallet():
     headers = {'X-API-KEY': XTE_API_RPC_PASSWORD}
-    try:
-        response = requests.post(f'{XTE_API_BASE_URL}/addresses/create', headers=headers)
-        response.raise_for_status()
+    response = requests.post('http://localhost:8441/addresses/create', headers=headers)
+    if response.status_code == 200:
         return response.json()
-    except requests.exceptions.RequestException as e:
-        raise Exception(f'Failed to create wallet: {e}')
+    else:
+        raise Exception('Failed to create wallet')
 
-# Command handler for creating a wallet
 def create_wallet_command(update: Update, context: CallbackContext) -> None:
     user_id = update.message.from_user.id
     existing_user = session.query(User).filter_by(telegram_id=user_id).first()
 
     if existing_user:
-        update.message.reply_text(f'You already have a wallet. Address: {existing_user.wallet_address}')
+        update.message.reply_text('You already have a wallet. Address: {}'.format(existing_user.wallet_address))
         return
 
     try:
         # Create wallet
         wallet_data = create_wallet()
         wallet_address = wallet_data['address']
-        encrypted_spend_key = fernet.encrypt(wallet_data['privateSpendKey'].encode()).decode()
+        encrypted_spend_key = fernet.encrypt(wallet_data['privateSpendKey'].encode()).decode()  # Use privateSpendKey for encryption
 
-        # Save user wallet details to database
         new_user = User(telegram_id=user_id, wallet_address=wallet_address, encrypted_spend_key=encrypted_spend_key)
         session.add(new_user)
         session.commit()
 
         # Prepare response message
-        response_message = f'Your new wallet has been created. Address: {wallet_address}\n'
-        response_message += f'Private Spend Key: {wallet_data["privateSpendKey"]}\n'
-        response_message += f'Public Spend Key: {wallet_data["publicSpendKey"]}'
+        response_message = 'Your new wallet has been created. Address: {}\n'.format(wallet_address)
+        response_message += 'Private Spend Key: {}\n'.format(wallet_data['privateSpendKey'])
+        response_message += 'Public Spend Key: {}'.format(wallet_data['publicSpendKey'])
 
         update.message.reply_text(response_message)
     except Exception as e:
-        logger.error(f'Error creating wallet: {e}')
-        update.message.reply_text('Error creating your wallet. Please try again.')
+        logger.error("Error creating wallet or address: {}".format(e))
+        update.message.reply_text('Error creating your wallet or address. Please try again.')
+
 
 
 def export_keys_command(update: Update, context: CallbackContext) -> None:
