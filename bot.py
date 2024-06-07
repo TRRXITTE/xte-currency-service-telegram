@@ -88,6 +88,7 @@ def create_wallet_command(update: Update, context: CallbackContext) -> None:
         existing_user.wallet = new_wallet
 
         # Commit the changes to the database
+        session.add(new_wallet)  # Add the new wallet to the session
         session.commit()
 
         # Prepare response message
@@ -99,7 +100,6 @@ def create_wallet_command(update: Update, context: CallbackContext) -> None:
     except Exception as e:
         logger.error(f'Error creating wallet: {e}')
         update.message.reply_text('Error creating your wallet. Please try again.')
-
 
 # Command handler for exporting keys
 def export_keys_command(update: Update, context: CallbackContext) -> None:
