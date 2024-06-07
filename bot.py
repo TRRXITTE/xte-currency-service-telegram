@@ -36,8 +36,7 @@ class User(Base):
     __tablename__ = 'users'
     id = Column(Integer, primary_key=True)
     telegram_id = Column(Integer, unique=True, nullable=False)
-    wallet_id = Column(Integer, ForeignKey('wallets.id'))
-    wallet = relationship("Wallet", back_populates="user")
+
 
 class Wallet(Base):
     __tablename__ = 'wallets'
