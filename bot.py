@@ -87,8 +87,10 @@ def create_wallet_command(update: Update, context: CallbackContext) -> None:
         # Associate the wallet with the user
         existing_user.wallet = new_wallet
 
+        # Add the new wallet to the session
+        session.add(new_wallet)
+
         # Commit the changes to the database
-        session.add(new_wallet)  # Add the new wallet to the session
         session.commit()
 
         # Prepare response message
