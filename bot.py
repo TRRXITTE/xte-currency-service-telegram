@@ -45,11 +45,12 @@ class User(Base):
 class Wallet(Base):
     __tablename__ = 'wallets'
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    user_id = Column(Integer, ForeignKey('users.id'))
     address = Column(String, nullable=False)
-    private_spend_key = Column(String, nullable=False)
+    encrypted_private_spend_key = Column(String, nullable=False)
     public_spend_key = Column(String, nullable=False)
-    user = relationship("User", back_populates="wallet")
+    user = relationship("User", back_populates="wallet", foreign_keys=[user_id])
+
 
 # Create engine and session
 engine = create_engine(DATABASE_URL)
