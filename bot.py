@@ -38,18 +38,15 @@ class User(Base):
     telegram_id = Column(Integer, unique=True, nullable=False)
     username = Column(String, unique=True, nullable=False)
     wallet_id = Column(Integer, ForeignKey('wallets.id'))
-    wallet = relationship("Wallet", back_populates="user", foreign_keys=[wallet_id])
-
-
+    wallet = relationship("Wallet", back_populates="user")
 
 class Wallet(Base):
     __tablename__ = 'wallets'
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('users.id'))
     address = Column(String, nullable=False)
     encrypted_private_spend_key = Column(String, nullable=False)
     public_spend_key = Column(String, nullable=False)
-    user = relationship("User", back_populates="wallet", foreign_keys=[user_id], remote_side="User.id")
+    user = relationship("User", back_populates="wallet")
 
 
 # Create engine and session
