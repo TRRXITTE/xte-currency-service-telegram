@@ -56,7 +56,7 @@ session = Session()
 # Helper functions
 def create_wallet():
     headers = {'X-API-KEY': XTE_API_RPC_PASSWORD}
-    response = requests.post('http://localhost:8441//addresses/create', headers=headers)
+    response = requests.post('http://localhost:8441/addresses/create', headers=headers)
     if response.status_code == 200:
         return response.json()
     else:
@@ -80,17 +80,12 @@ def create_wallet_command(update: Update, context: CallbackContext) -> None:
         session.add(new_user)
         session.commit()
 
-        # Create new address
-        address_data = create_address(wallet_address)
-        new_address = Address(user_id=new_user.id, address=address_data['address'], private_spend_key=address_data['privateSpendKey'], public_spend_key=address_data['publicSpendKey'])
-        session.add(new_address)
-        session.commit()
-
         update.message.reply_text('Your new wallet has been created. Address: {}'.format(wallet_address))
-        update.message.reply_text('New address created: {}'.format(address_data['address']))
+        update.message.reply_text('Deposit output: {}'.format(wallet_data['deposit_output']))  # Include deposit output
     except Exception as e:
         logger.error("Error creating wallet or address: {}".format(e))
         update.message.reply_text('Error creating your wallet or address. Please try again.')
+
 
 def export_keys_command(update: Update, context: CallbackContext) -> None:
     user_id = update.message.from_user.id
