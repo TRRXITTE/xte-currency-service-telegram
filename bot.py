@@ -16,8 +16,11 @@ load_dotenv()
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 
 # Constants
+TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
+XTE_API_BASE_URL = os.getenv('XTE_API_BASE_URL')
 DATABASE_URL = os.getenv('DATABASE_URL')
 ENCRYPTION_KEY = os.getenv('ENCRYPTION_KEY')
+XTE_API_RPC_PASSWORD = os.getenv('XTE_API_RPC_PASSWORD')
 
 # Set up encryption
 fernet = Fernet(ENCRYPTION_KEY.encode())
