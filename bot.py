@@ -6,7 +6,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from cryptography.fernet import Fernet
 from telegram import Update, ForceReply
-from telegram.ext import Updater, CommandHandler, CallbackContext, Request
+from telegram.ext import Updater, CommandHandler, CallbackContext
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -191,8 +191,7 @@ def history_command(update: Update, context: CallbackContext) -> None:
         message += "Amount: {} XTE, Recipient: {}, Status: {}\n".format(tx.amount, tx.recipient_address, tx.status)
     update.message.reply_text(message)
 
-# Create a queue to store incoming updates
-update_queue = Request()
+
 
 def main() -> None:
     updater = Updater(TELEGRAM_BOT_TOKEN, update_queue=update_queue)
