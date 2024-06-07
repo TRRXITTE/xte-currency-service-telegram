@@ -8,6 +8,7 @@ from telegram import Update, ForceReply
 from telegram.ext import Updater, CommandHandler, CallbackContext
 from dotenv import load_dotenv
 import os
+import json  # Add json module
 
 # Load init.py file
 from init import create_wallet_init_file
@@ -74,17 +75,23 @@ def create_wallet_command(update: Update, context: CallbackContext) -> None:
         # Create wallet
         wallet_data = create_wallet()
         wallet_address = wallet_data['address']
-        encrypted_spend_key = fernet.encrypt(wallet_data['spendKey'].encode()).decode()
+        encrypted_spend_key = fernet.encrypt(wallet_data['privateSpendKey'].encode()).decode()  # Use privateSpendKey for encryption
 
         new_user = User(telegram_id=user_id, wallet_address=wallet_address, encrypted_spend_key=encrypted_spend_key)
         session.add(new_user)
         session.commit()
 
-        update.message.reply_text('Your new wallet has been created. Address: {}'.format(wallet_address))
-        update.message.reply_text('Deposit output: {}'.format(wallet_data['deposit_output']))  # Include deposit output
+        # Prepare response message
+        response_message = 'Your new wallet has been created. Address: {}\n'.format(wallet_address)
+        response_message += 'Private Spend Key: {}\n'.format(wallet_data['privateSpendKey'])
+        response_message += 'Public Spend Key: {}'.format(wallet_data['publicSpendKey'])
+
+        update.message.reply_text(response_message)
     except Exception as e:
         logger.error("Error creating wallet or address: {}".format(e))
         update.message.reply_text('Error creating your wallet or address. Please try again.')
+
+# Remaining code remains the same...
 
 
 def export_keys_command(update: Update, context: CallbackContext) -> None:
