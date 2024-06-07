@@ -79,11 +79,15 @@ def create_wallet_command(update: Update, context: CallbackContext) -> None:
         encrypted_private_spend_key = fernet.encrypt(wallet_data['privateSpendKey'].encode()).decode()
         public_spend_key = wallet_data['publicSpendKey']
 
-        # Save wallet details to database
-        new_wallet = Wallet(address=wallet_address, encrypted_private_spend_key=encrypted_private_spend_key,
+        # Create a new wallet instance
+        new_wallet = Wallet(address=wallet_address,
+                            encrypted_private_spend_key=encrypted_private_spend_key,
                             public_spend_key=public_spend_key)
-        new_user = User(telegram_id=user_id, wallet=new_wallet)
-        session.add(new_user)
+
+        # Associate the wallet with the user
+        existing_user.wallet = new_wallet
+
+        # Commit the changes to the database
         session.commit()
 
         # Prepare response message
