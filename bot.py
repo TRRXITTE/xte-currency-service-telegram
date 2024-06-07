@@ -278,11 +278,12 @@ def main() -> None:
     dispatcher.add_handler(CommandHandler("balance", balance_command))
     dispatcher.add_handler(CommandHandler("tip", tip_command, pass_args=True))
     dispatcher.add_handler(CommandHandler("history", history_command))
-    dispatcher.add_handler(CommandHandler("addresses/create", create_address_command))
+    dispatcher.add_handler(CommandHandler("addresses_create", create_address_command))  # Adjusted command
     dispatcher.add_handler(CommandHandler("exportkeys", export_keys_command))
 
     updater.start_polling()
     updater.idle()
+
 
 if __name__ == '__main__':
     main()
