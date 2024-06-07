@@ -192,7 +192,7 @@ def history_command(update: Update, context: CallbackContext) -> None:
     update.message.reply_text(message)
 
 def main() -> None:
-    updater = Updater(TELEGRAM_BOT_TOKEN)
+    updater = Updater(TELEGRAM_BOT_TOKEN, use_context=True)
     dispatcher = updater.dispatcher
 
     dispatcher.add_handler(CommandHandler("start", start))
