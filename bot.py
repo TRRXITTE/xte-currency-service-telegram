@@ -1,4 +1,3 @@
-import os
 import logging
 import requests
 from sqlalchemy import create_engine, Column, Integer, String, Float, ForeignKey
@@ -8,6 +7,9 @@ from cryptography.fernet import Fernet
 from telegram import Update, ForceReply
 from telegram.ext import Updater, CommandHandler, CallbackContext
 from dotenv import load_dotenv
+
+# Load init.py file
+from init import create_wallet_init_file
 
 # Load environment variables
 load_dotenv()
@@ -51,12 +53,65 @@ Session = sessionmaker(bind=engine)
 session = Session()
 
 # Helper functions
-def create_wallet():
-    headers = {'X-API-KEY': XTE_API_RPC_PASSWORD}  # Use RPC password as X-API-KEY
-    response = requests.post(f"{XTE_API_BASE_URL}/wallet/create", headers=headers)
-    response.raise_for_status()
-    return response.json()
+def create_wallet_command(update: Update, context: CallbackContext) -> None:
+    user_id = update.message.from_user.id
+    existing_user = session.query(User).filter_by(telegram_id=user_id).first()
 
+    if existing_user:
+        update.message.reply_text('You already have a wallet. Address: {}'.format(existing_user.wallet_address))
+        return
+
+    try:
+        wallet = create_wallet()
+        wallet_address = wallet['address']
+        encrypted_spend_key = fernet.encrypt(wallet['spendKey'].encode()).decode()
+
+        new_user = User(telegram_id=user_id, wallet_address=wallet_address, encrypted_spend_key=encrypted_spend_key)
+        session.add(new_user)
+        session.commit()
+
+        update.message.reply_text('Your new wallet has been created. Address: {}'.format(wallet_address))
+    except Exception as e:
+        logger.error("Error creating wallet: {}".format(e))
+        update.message.reply_text('Error creating your wallet. Please try again.')
+
+def create_address_command(update: Update, context: CallbackContext) -> None:
+    user_id = update.message.from_user.id
+    user = session.query(User).filter_by(telegram_id=user_id).first()
+
+    if not user:
+        update.message.reply_text('You do not have a wallet. Use /createwallet to create one.')
+        return
+
+    try:
+        address_data = create_address(user.wallet_address)
+        new_address = Address(user_id=user.id, address=address_data['address'], private_spend_key=address_data['privateSpendKey'], public_spend_key=address_data['publicSpendKey'])
+        session.add(new_address)
+        session.commit()
+        update.message.reply_text('New address created: {}'.format(address_data['address']))
+    except Exception as e:
+        logger.error("Error creating address: {}".format(e))
+        update.message.reply_text('Error creating a new address. Please try again.')
+
+def export_keys_command(update: Update, context: CallbackContext) -> None:
+    user_id = update.message.from_user.id
+    user = session.query(User).filter_by(telegram_id=user_id).first()
+
+    if not user:
+        update.message.reply_text('You do not have a wallet. Use /createwallet to create one.')
+        return
+
+    # Check if the message is from a direct chat
+    if update.message.chat.type == 'private':
+        decrypted_spend_key = fernet.decrypt(user.encrypted_spend_key.encode()).decode()
+        update.message.reply_text('Your private spend key: {}\nYour public spend key: {}'.format(decrypted_spend_key, user.wallet_address))
+    else:
+        update.message.reply_text('You can only export keys in a direct chat.')
+
+++++
+
+
+# Helper functions
 def get_balance(wallet_address):
     headers = {'Authorization': 'Basic {}'.format(XTE_API_RPC_PASSWORD)}
     response = requests.get("{}/balance/{}".format(XTE_API_BASE_URL, wallet_address), headers=headers)
@@ -192,6 +247,28 @@ def history_command(update: Update, context: CallbackContext) -> None:
     update.message.reply_text(message)
 
 
+def autosave():
+    global wallet_opened
+    if wallet_opened:
+        # Save the opened wallet
+        print("Autosaving the opened wallet...")
+        # Your saving logic goes here
+        # For example: save_wallet()
+    # Schedule the next autosave after 1 minute
+    Timer(60, autosave).start()
+
+def close_and_save_wallet(update: Update, context: CallbackContext) -> None:
+    global wallet_opened
+    if wallet_opened:
+        # Close and save the opened wallet
+        print("Closing and saving the opened wallet...")
+        # Your closing and saving logic goes here
+        # For example: close_and_save_wallet()
+        wallet_opened = False
+        update.message.reply_text('Wallet closed and saved successfully.')
+    else:
+        update.message.reply_text('No wallet is currently opened.')
+
 def main() -> None:
     updater = Updater(TELEGRAM_BOT_TOKEN)
     dispatcher = updater.dispatcher
@@ -201,6 +278,8 @@ def main() -> None:
     dispatcher.add_handler(CommandHandler("balance", balance_command))
     dispatcher.add_handler(CommandHandler("tip", tip_command, pass_args=True))
     dispatcher.add_handler(CommandHandler("history", history_command))
+dispatcher.add_handler(CommandHandler("addresses/create", create_address_command))
+dispatcher.add_handler(CommandHandler("exportkeys", export_keys_command))
 
     updater.start_polling()
     updater.idle()
