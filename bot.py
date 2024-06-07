@@ -5,6 +5,8 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from cryptography.fernet import Fernet
 from dotenv import load_dotenv
+from telegram import Update
+from telegram.ext import Updater, CommandHandler, CallbackContext
 import os
 
 # Load environment variables
