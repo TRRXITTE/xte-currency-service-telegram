@@ -1,6 +1,6 @@
 import logging
 import requests
-from sqlalchemy import create_engine, Column, Integer, String, Float, ForeignKey
+from sqlalchemy import create_engine, Column, Integer, String, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from cryptography.fernet import Fernet
@@ -33,7 +33,6 @@ class User(Base):
     __tablename__ = 'users'
     id = Column(Integer, primary_key=True)
     telegram_id = Column(Integer, unique=True, nullable=False)
-    username = Column(String, unique=True, nullable=False)
     wallet = relationship("Wallet", uselist=False, back_populates="user")
 
 class Wallet(Base):
@@ -44,7 +43,6 @@ class Wallet(Base):
     private_spend_key = Column(String, nullable=False)
     public_spend_key = Column(String, nullable=False)
     user = relationship("User", back_populates="wallet")
-
 
 # Create engine and session
 engine = create_engine(DATABASE_URL)
@@ -65,7 +63,6 @@ def create_wallet() -> dict:
 # Command handler for creating a wallet
 def create_wallet_command(update: Update, context: CallbackContext) -> None:
     user_id = update.message.from_user.id
-    username = update.message.from_username
     existing_user = session.query(User).filter_by(telegram_id=user_id).first()
 
     if existing_user:
@@ -82,7 +79,7 @@ def create_wallet_command(update: Update, context: CallbackContext) -> None:
         # Save wallet details to database
         new_wallet = Wallet(address=wallet_address, encrypted_private_spend_key=encrypted_private_spend_key,
                             public_spend_key=public_spend_key)
-        new_user = User(telegram_id=user_id, username=username, wallet=new_wallet)
+        new_user = User(telegram_id=user_id, wallet=new_wallet)
         session.add(new_user)
         session.commit()
 
@@ -96,8 +93,7 @@ def create_wallet_command(update: Update, context: CallbackContext) -> None:
         logger.error(f'Error creating wallet: {e}')
         update.message.reply_text('Error creating your wallet. Please try again.')
 
-
-
+# Command handler for exporting keys
 def export_keys_command(update: Update, context: CallbackContext) -> None:
     user_id = update.message.from_user.id
     user = session.query(User).filter_by(telegram_id=user_id).first()
@@ -106,13 +102,9 @@ def export_keys_command(update: Update, context: CallbackContext) -> None:
         update.message.reply_text('You do not have a wallet. Use /createwallet to create one.')
         return
 
-    # Check if the message is from a direct chat
-    if update.message.chat.type == 'private':
-        decrypted_spend_key = fernet.decrypt(user.encrypted_spend_key.encode()).decode()
-        update.message.reply_text('Your private spend key: {}\nYour public spend key: {}'.format(decrypted_spend_key, user.wallet_address))
-    else:
-        update.message.reply_text('You can only export keys in a direct chat.')
+    decrypted_private_spend_key = fernet.decrypt(user.wallet.encrypted_private_spend_key.encode()).decode()
 
+    update.message.reply_text(f'Your private spend key: {decrypted_private_spend_key}\nYour public spend key: {user.wallet.public_spend_key}')
 
 
 # Helper functions
