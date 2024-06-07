@@ -36,7 +36,6 @@ class User(Base):
     __tablename__ = 'users'
     id = Column(Integer, primary_key=True)
     telegram_id = Column(Integer, unique=True, nullable=False)
-    username = Column(String, unique=True, nullable=False)
     wallet_id = Column(Integer, ForeignKey('wallets.id'))
     wallet = relationship("Wallet", back_populates="user")
 
@@ -47,7 +46,6 @@ class Wallet(Base):
     encrypted_private_spend_key = Column(String, nullable=False)
     public_spend_key = Column(String, nullable=False)
     user = relationship("User", back_populates="wallet")
-
 
 # Create engine and session
 engine = create_engine(DATABASE_URL)
