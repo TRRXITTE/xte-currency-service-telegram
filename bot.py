@@ -41,9 +41,10 @@ class Wallet(Base):
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
     address = Column(String, nullable=False)
-    encrypted_private_spend_key = Column(String, nullable=False)
+    private_spend_key = Column(String, nullable=False)
     public_spend_key = Column(String, nullable=False)
     user = relationship("User", back_populates="wallet")
+
 
 # Create engine and session
 engine = create_engine(DATABASE_URL)
