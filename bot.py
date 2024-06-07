@@ -36,7 +36,10 @@ class User(Base):
     __tablename__ = 'users'
     id = Column(Integer, primary_key=True)
     telegram_id = Column(Integer, unique=True, nullable=False)
-    wallet = relationship("Wallet", uselist=False, back_populates="user")
+    username = Column(String, unique=True, nullable=False)
+    wallet_id = Column(Integer, ForeignKey('wallets.id'))
+    wallet = relationship("Wallet", back_populates="user")
+
 
 class Wallet(Base):
     __tablename__ = 'wallets'
@@ -95,6 +98,7 @@ def create_wallet_command(update: Update, context: CallbackContext) -> None:
     except Exception as e:
         logger.error(f'Error creating wallet: {e}')
         update.message.reply_text('Error creating your wallet. Please try again.')
+
 
 # Command handler for exporting keys
 def export_keys_command(update: Update, context: CallbackContext) -> None:
