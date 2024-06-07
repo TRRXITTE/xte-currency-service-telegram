@@ -54,6 +54,12 @@ Session = sessionmaker(bind=engine)
 session = Session()
 
 # Helper functions
+def create_wallet():
+    response = requests.post('http://localhost/wallet/create')
+    if response.status_code == 200:
+        return response.json()
+    else:
+        raise Exception('Failed to create wallet')
 
 def create_wallet_command(update: Update, context: CallbackContext) -> None:
     user_id = update.message.from_user.id
@@ -65,7 +71,7 @@ def create_wallet_command(update: Update, context: CallbackContext) -> None:
 
     try:
         # Create wallet
-        wallet_data = requests.post('http://localhost/wallet/create').json()
+        wallet_data = create_wallet()
         wallet_address = wallet_data['address']
         encrypted_spend_key = fernet.encrypt(wallet_data['spendKey'].encode()).decode()
 
