@@ -21,7 +21,6 @@ XTE_API_BASE_URL = os.getenv('XTE_API_BASE_URL')
 DATABASE_URL = os.getenv('DATABASE_URL')
 ENCRYPTION_KEY = os.getenv('ENCRYPTION_KEY')
 XTE_API_RPC_PASSWORD = os.getenv('XTE_API_RPC_PASSWORD')
-WALLET_INIT_FILE = 'wallet_init.json'
 
 # Set up encryption
 fernet = Fernet(ENCRYPTION_KEY.encode())
@@ -55,13 +54,6 @@ Session = sessionmaker(bind=engine)
 session = Session()
 
 # Helper functions
-def load_wallet_init():
-    if os.path.exists(WALLET_INIT_FILE):
-        with open(WALLET_INIT_FILE, 'r') as file:
-            return json.load(file)
-    else:
-        raise FileNotFoundError(f"Wallet initialization file '{WALLET_INIT_FILE}' not found.")
-
 def create_wallet():
     headers = {'X-API-KEY': XTE_API_RPC_PASSWORD}
     response = requests.post('http://localhost:8441/wallet/create', headers=headers)
