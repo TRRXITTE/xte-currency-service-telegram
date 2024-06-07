@@ -85,7 +85,7 @@ def validate_address(address):
     return response.status_code == 200
 
 # Command handlers
-def start(update: Update, context: CallbackContext) -> None:
+def start(update: update, context: CallbackContext) -> None:
     user = update.effective_user
     update.message.reply_html(
         'Hi {}! I am your XTE tip bot. Use /createwallet to get started.'.format(user.mention_html())
