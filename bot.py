@@ -36,7 +36,7 @@ class User(Base):
     __tablename__ = 'users'
     id = Column(Integer, primary_key=True)
     telegram_id = Column(Integer, unique=True, nullable=False)
-
+    wallet = relationship("Wallet", uselist=False, back_populates="user")
 
 class Wallet(Base):
     __tablename__ = 'wallets'
@@ -44,6 +44,7 @@ class Wallet(Base):
     address = Column(String, nullable=False)
     encrypted_private_spend_key = Column(String, nullable=False)
     public_spend_key = Column(String, nullable=False)
+    user_id = Column(Integer, ForeignKey('users.id'))
     user = relationship("User", back_populates="wallet")
 
 # Create engine and session
@@ -67,7 +68,7 @@ def create_wallet_command(update: Update, context: CallbackContext) -> None:
     user_id = update.message.from_user.id
     existing_user = session.query(User).filter_by(telegram_id=user_id).first()
 
-    if existing_user:
+    if existing_user and existing_user.wallet:
         update.message.reply_text(f'You already have a wallet. Address: {existing_user.wallet.address}')
         return
 
@@ -83,8 +84,13 @@ def create_wallet_command(update: Update, context: CallbackContext) -> None:
                             encrypted_private_spend_key=encrypted_private_spend_key,
                             public_spend_key=public_spend_key)
 
-        # Associate the wallet with the user
-        existing_user.wallet = new_wallet
+        if existing_user:
+            # Associate the wallet with the existing user
+            existing_user.wallet = new_wallet
+        else:
+            # Create a new user and associate with the wallet
+            new_user = User(telegram_id=user_id, wallet=new_wallet)
+            session.add(new_user)
 
         # Add the new wallet to the session
         session.add(new_wallet)
@@ -107,13 +113,14 @@ def export_keys_command(update: Update, context: CallbackContext) -> None:
     user_id = update.message.from_user.id
     user = session.query(User).filter_by(telegram_id=user_id).first()
 
-    if not user:
+    if not user or not user.wallet:
         update.message.reply_text('You do not have a wallet. Use /createwallet to create one.')
         return
 
     decrypted_private_spend_key = fernet.decrypt(user.wallet.encrypted_private_spend_key.encode()).decode()
 
     update.message.reply_text(f'Your private spend key: {decrypted_private_spend_key}\nYour public spend key: {user.wallet.public_spend_key}')
+
 
 
 # Helper functions
