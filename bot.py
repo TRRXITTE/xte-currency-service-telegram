@@ -52,8 +52,8 @@ session = Session()
 
 # Helper functions
 def create_wallet():
-    headers = {'Authorization': 'Basic {}'.format(XTE_API_RPC_PASSWORD)}
-    response = requests.post("{}/wallet/create".format(XTE_API_BASE_URL), headers=headers)
+    headers = {'X-API-KEY': XTE_API_RPC_PASSWORD}  # Use RPC password as X-API-KEY
+    response = requests.post(f"{XTE_API_BASE_URL}/wallet/create", headers=headers)
     response.raise_for_status()
     return response.json()
 
