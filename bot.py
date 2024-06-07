@@ -108,7 +108,6 @@ def export_keys_command(update: Update, context: CallbackContext) -> None:
     else:
         update.message.reply_text('You can only export keys in a direct chat.')
 
-++++
 
 
 # Helper functions
