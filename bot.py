@@ -7,6 +7,7 @@ from sqlalchemy.orm import sessionmaker, relationship
 from cryptography.fernet import Fernet
 from telegram import Update, ForceReply
 from telegram.ext import Updater, CommandHandler, CallbackContext
+from telegram.utils.request import Request
 from dotenv import load_dotenv
 
 # Load environment variables
