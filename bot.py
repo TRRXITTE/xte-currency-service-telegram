@@ -53,19 +53,19 @@ session = Session()
 
 # Helper functions
 def create_wallet():
-    headers = {'Authorization': f'Basic {XTE_API_RPC_PASSWORD}'}
-    response = requests.post(f"{XTE_API_BASE_URL}/wallet/create", headers=headers)
+    headers = {'Authorization': 'Basic {}'.format(XTE_API_RPC_PASSWORD)}
+    response = requests.post("{}/wallet/create".format(XTE_API_BASE_URL), headers=headers)
     response.raise_for_status()
     return response.json()
 
 def get_balance(wallet_address):
-    headers = {'Authorization': f'Basic {XTE_API_RPC_PASSWORD}'}
-    response = requests.get(f"{XTE_API_BASE_URL}/balance/{wallet_address}", headers=headers)
+    headers = {'Authorization': 'Basic {}'.format(XTE_API_RPC_PASSWORD)}
+    response = requests.get("{}/balance/{}".format(XTE_API_BASE_URL, wallet_address), headers=headers)
     response.raise_for_status()
     return response.json()
 
 def send_transaction(sender_spend_key, recipient_address, amount):
-    headers = {'Authorization': f'Basic {XTE_API_RPC_PASSWORD}'}
+    headers = {'Authorization': 'Basic {}'.format(XTE_API_RPC_PASSWORD)}
     payload = {
         'destinations': [
             {
@@ -75,21 +75,21 @@ def send_transaction(sender_spend_key, recipient_address, amount):
         ],
         'spendKey': sender_spend_key
     }
-    response = requests.post(f"{XTE_API_BASE_URL}/transactions/send/basic", json=payload, headers=headers)
+    response = requests.post("{}/transactions/send/basic".format(XTE_API_BASE_URL), json=payload, headers=headers)
     response.raise_for_status()
     return response.json()
 
 def validate_address(address):
-    headers = {'Authorization': f'Basic {XTE_API_RPC_PASSWORD}'}
+    headers = {'Authorization': 'Basic {}'.format(XTE_API_RPC_PASSWORD)}
     payload = {'address': address}
-    response = requests.post(f"{XTE_API_BASE_URL}/addresses/validate", json=payload, headers=headers)
+    response = requests.post("{}/addresses/validate".format(XTE_API_BASE_URL), json=payload, headers=headers)
     return response.status_code == 200
 
 # Command handlers
 def start(update: Update, context: CallbackContext) -> None:
     user = update.effective_user
     update.message.reply_html(
-        rf'Hi {user.mention_html()}! I am your XTE tip bot. Use /createwallet to get started.'
+        'Hi {}! I am your XTE tip bot. Use /createwallet to get started.'.format(user.mention_html())
     )
 
 def create_wallet_command(update: Update, context: CallbackContext) -> None:
@@ -97,7 +97,7 @@ def create_wallet_command(update: Update, context: CallbackContext) -> None:
     existing_user = session.query(User).filter_by(telegram_id=user_id).first()
 
     if existing_user:
-        update.message.reply_text(f'You already have a wallet. Address: {existing_user.wallet_address}')
+        update.message.reply_text('You already have a wallet. Address: {}'.format(existing_user.wallet_address))
         return
 
     try:
@@ -109,9 +109,9 @@ def create_wallet_command(update: Update, context: CallbackContext) -> None:
         session.add(new_user)
         session.commit()
 
-        update.message.reply_text(f'Your new wallet has been created. Address: {wallet_address}')
+        update.message.reply_text('Your new wallet has been created. Address: {}'.format(wallet_address))
     except Exception as e:
-        logger.error(f"Error creating wallet: {e}")
+        logger.error("Error creating wallet: {}".format(e))
         update.message.reply_text('Error creating your wallet. Please try again.')
 
 def balance_command(update: Update, context: CallbackContext) -> None:
@@ -124,9 +124,9 @@ def balance_command(update: Update, context: CallbackContext) -> None:
 
     try:
         balance = get_balance(user.wallet_address)
-        update.message.reply_text(f'Your wallet balance is: {balance["available_balance"]} XTE')
+        update.message.reply_text('Your wallet balance is: {} XTE'.format(balance["available_balance"]))
     except Exception as e:
-        logger.error(f"Error fetching balance: {e}")
+        logger.error("Error fetching balance: {}".format(e))
         update.message.reply_text('Error fetching balance. Please try again.')
 
 def tip_command(update: Update, context: CallbackContext) -> None:
@@ -167,11 +167,11 @@ def tip_command(update: Update, context: CallbackContext) -> None:
             new_transaction = Transaction(user_id=sender.id, amount=amount, recipient_address=recipient.wallet_address, status='completed')
             session.add(new_transaction)
             session.commit()
-            update.message.reply_text(f'Successfully tipped {amount} XTE to {recipient_username}')
+            update.message.reply_text('Successfully tipped {} XTE to {}'.format(amount, recipient_username))
         else:
             update.message.reply_text('Failed to send the tip. Please try again.')
     except Exception as e:
-        logger.error(f"Error sending tip: {e}")
+        logger.error("Error sending tip: {}".format(e))
         update.message.reply_text('Error sending tip. Please try again.')
 
 def history_command(update: Update, context: CallbackContext) -> None:
@@ -189,7 +189,7 @@ def history_command(update: Update, context: CallbackContext) -> None:
 
     message = 'Transaction History:\n'
     for tx in transactions:
-        message += f"Amount: {tx.amount} XTE, Recipient: {tx.recipient_address}, Status: {tx.status}\n"
+        message += "Amount: {} XTE, Recipient: {}, Status: {}\n".format(tx.amount, tx.recipient_address, tx.status)
     update.message.reply_text(message)
 
 def main() -> None:
