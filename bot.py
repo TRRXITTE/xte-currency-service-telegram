@@ -9,8 +9,11 @@ from telegram import Update
 from telegram.ext import Updater, CommandHandler, CallbackContext
 import os
 
-# Load environment variables
+# Load environment variables from .env file
 load_dotenv()
+
+# Access the TELEGRAM_BOT_TOKEN variable
+TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 
 # Constants
 DATABASE_URL = os.getenv('DATABASE_URL')
