@@ -7,6 +7,7 @@ from cryptography.fernet import Fernet
 from telegram import Update, ForceReply
 from telegram.ext import Updater, CommandHandler, CallbackContext
 from dotenv import load_dotenv
+import os
 
 # Load init.py file
 from init import create_wallet_init_file
