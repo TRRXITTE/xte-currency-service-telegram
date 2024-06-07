@@ -7,7 +7,6 @@ from sqlalchemy.orm import sessionmaker, relationship
 from cryptography.fernet import Fernet
 from telegram import Update, ForceReply
 from telegram.ext import Updater, CommandHandler, CallbackContext
-from telegram.request import WebhookRequest
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -193,7 +192,7 @@ def history_command(update: Update, context: CallbackContext) -> None:
     update.message.reply_text(message)
 
 # Create a queue to store incoming updates
-update_queue = WebhookRequest()
+update_queue = Request()
 
 def main() -> None:
     updater = Updater(TELEGRAM_BOT_TOKEN, update_queue=update_queue)
